@@ -71,7 +71,7 @@ module OmniAuth
           :redirect_uri => callback_url
         }
 
-        params.merge! client.redirection_params
+        params.merge! client_params
         params.merge! token_params.to_hash(:symbolize_keys => true)
 
         opts = {
@@ -91,6 +91,26 @@ module OmniAuth
           prune!(value) if value.is_a?(Hash)
           value.nil? || (value.respond_to?(:empty?) && value.empty?)
         end
+      end
+
+      # The OAuth client_id and client_secret
+      #
+      # @return [Hash]
+      def client_params
+        case client.options[:auth_scheme]
+        when :request_body
+          {'client_id' => client.id, 'client_secret' => client.secret}
+        else
+          {:headers => {'Authorization' => authorization(client.id, client.secret)}}
+        end
+      end
+
+      # Returns the Authorization header value for Basic Authentication
+      #
+      # @param [String] The client ID
+      # @param [String] the client secret
+      def authorization(client_id, client_secret)
+        'Basic ' + Base64.encode64(client_id + ':' + client_secret).delete("\n")
       end
     end
   end
